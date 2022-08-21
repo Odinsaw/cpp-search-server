@@ -9,10 +9,12 @@
 #include <utility>
 #include <vector>
 #include <optional>
+#include <numeric>
 
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
+const double eps = 1e-6;
 
 string ReadLine() {
 	string s;
@@ -90,7 +92,9 @@ public:
 	explicit SearchServer(const StringContainer& stop_words)
 		: stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
 		for (const auto& word : stop_words) {
-			if (!IsValidWord(word)) { throw invalid_argument("invalid stop word!"s); }
+			if (!IsValidWord(word)) {
+				throw invalid_argument("invalid stop word!"s);
+			}
 		}
 	}
 
@@ -105,9 +109,7 @@ public:
 			throw invalid_argument("invalid document id!"s);
 		}
 		vector<string> words;
-		if (!SplitIntoWordsNoStop(document, words)) {
-			throw invalid_argument("invalid document!"s);
-		}
+		words = SplitIntoWordsNoStop(document);
 
 		const double inv_word_count = 1.0 / words.size();
 		for (const string& word : words) {
@@ -119,14 +121,11 @@ public:
 
 	template <typename DocumentPredicate>
 	vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
-		Query query;
-		if (!ParseQuery(raw_query, query)) {
-			throw invalid_argument("invalid query!"s);
-		}
+		Query query = ParseQuery(raw_query);
 		auto matched_documents = FindAllDocuments(query, document_predicate);
 
 		sort(matched_documents.begin(), matched_documents.end(), [](const Document & lhs, const Document & rhs) {
-			if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+			if (abs(lhs.relevance - rhs.relevance) < eps) {
 				return lhs.rating > rhs.rating;
 			}
 			else {
@@ -164,10 +163,7 @@ public:
 	}
 
 	tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
-		Query query;
-		if (!ParseQuery(raw_query, query)) {
-			throw invalid_argument("invalid query!"s);
-		}
+		Query query = ParseQuery(raw_query);
 		vector<string> matched_words;
 		for (const string& word : query.plus_words) {
 			if (word_to_document_freqs_.count(word) == 0) {
@@ -211,29 +207,24 @@ private:
 			});
 	}
 
-	[[nodiscard]] bool SplitIntoWordsNoStop(const string& text, vector<string>& result) const {
-		result.clear();
+	vector<string> SplitIntoWordsNoStop(const string& text) const {
 		vector<string> words;
 		for (const string& word : SplitIntoWords(text)) {
 			if (!IsValidWord(word)) {
-				return false;
+				throw invalid_argument("invalid document!"s);
 			}
 			if (!IsStopWord(word)) {
 				words.push_back(word);
 			}
 		}
-		result.swap(words);
-		return true;
+		return words;
 	}
 
 	static int ComputeAverageRating(const vector<int>& ratings) {
 		if (ratings.empty()) {
 			return 0;
 		}
-		int rating_sum = 0;
-		for (const int rating : ratings) {
-			rating_sum += rating;
-		}
+		int rating_sum = accumulate(ratings.begin(), ratings.end(),0);
 		return rating_sum / static_cast<int>(ratings.size());
 	}
 
@@ -243,12 +234,10 @@ private:
 		bool is_stop;
 	};
 
-	[[nodiscard]] bool ParseQueryWord(string text, QueryWord& result) const {
-		// Empty result by initializing it with default constructed QueryWord
-		result = {};
+	QueryWord ParseQueryWord(string text) const {
 
 		if (text.empty()) {
-			return false;
+			throw invalid_argument("invalid query!"s);
 		}
 		bool is_minus = false;
 		if (text[0] == '-') {
@@ -256,11 +245,9 @@ private:
 			text = text.substr(1);
 		}
 		if (text.empty() || text[0] == '-' || !IsValidWord(text)) {
-			return false;
+			throw invalid_argument("invalid query!"s);
 		}
-
-		result = QueryWord{ text, is_minus, IsStopWord(text) };
-		return true;
+		return QueryWord{ text, is_minus, IsStopWord(text) };;
 	}
 
 	struct Query {
@@ -268,24 +255,20 @@ private:
 		set<string> minus_words;
 	};
 
-	[[nodiscard]] bool ParseQuery(const string& text, Query& result) const {
-		// Empty result by initializing it with default constructed Query
-		result = {};
+	Query ParseQuery(const string& text) const {
+		Query q;
 		for (const string& word : SplitIntoWords(text)) {
-			QueryWord query_word;
-			if (!ParseQueryWord(word, query_word)) {
-				return false;
-			}
+			QueryWord query_word = ParseQueryWord(word);
 			if (!query_word.is_stop) {
 				if (query_word.is_minus) {
-					result.minus_words.insert(query_word.data);
+					q.minus_words.insert(query_word.data);
 				}
 				else {
-					result.plus_words.insert(query_word.data);
+					q.plus_words.insert(query_word.data);
 				}
 			}
 		}
-		return true;
+		return q;
 	}
 
 	// Existence required
