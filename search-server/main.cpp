@@ -28,7 +28,7 @@ int main() {
 		request_queue.AddFindRequest("empty request"s);
 	}
 	// все еще 1439 запросов с нулевым результатом
-	request_queue.AddFindRequest("curly dog"s, DocumentStatus::ACTUAL);
+	request_queue.AddFindRequest("curly dog"s, DocumentStatus::BANNED);
 	// новые сутки, первый запрос удален, 1438 запросов с нулевым результатом
 	request_queue.AddFindRequest("big collar"s, [](int document_id, DocumentStatus status, int rating) {return document_id == 4; });
 	// первый запрос удален, 1437 запросов с нулевым результатом

@@ -7,13 +7,13 @@
 
 	std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query, DocumentStatus status) {
 		std::vector<Document> res = search_server_.FindTopDocuments(raw_query, status);
-		AddRequest(res);
+		AddRequest(res.size());
 		return res;
 	}
 
 	std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query) {
 		std::vector<Document> res = search_server_.FindTopDocuments(raw_query);
-		AddRequest(res);
+		AddRequest(res.size());
 		return res;
 	}
 
@@ -22,25 +22,24 @@
 	}
 
 
-		RequestQueue::QueryResult::QueryResult(const std::vector<Document>& res)
-			:result_(res)
+		RequestQueue::QueryResult::QueryResult(int results, uint64_t time)
+			:results_(results), time_(time)
 		{
 
 		}
-		std::vector<Document> result_;
+		//std::vector<Document> result_;
 
 
-	void RequestQueue::AddRequest(const std::vector<Document>& res) {
-		time_ == min_in_day_ - 1 ? time_ = 0 : ++time_;
+	void RequestQueue::AddRequest(int results) {
+		current_time_ == min_in_day_ - 1 ? current_time_ = 0 : ++current_time_;
 		if (requests_.size() == min_in_day_) {
-			if (requests_.front().result_.empty()) {
+			if (requests_.front().results_ == 0) {
 				--empty_results_;
-				requests_.front().result_;
 			}
 			requests_.pop_front();
 		}
-		requests_.push_back(QueryResult(res));
-		if (res.empty()) {
+		requests_.push_back(QueryResult(results, current_time_));
+		if (results == 0) {
 			++empty_results_;
 		}
 	}
