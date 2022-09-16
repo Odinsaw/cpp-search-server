@@ -18,8 +18,8 @@ public:
 private:
 	struct QueryResult {
 		QueryResult(int results, uint64_t time);
-		uint64_t time_;
 		int results_;
+		uint64_t time_;
 	};
 	const SearchServer& search_server_;
 	int empty_results_ = 0;
