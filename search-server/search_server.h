@@ -8,12 +8,12 @@
 #include <stdexcept>
 #include <algorithm>
 
-using namespace std::literals;
-
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 const double eps = 1e-6;
 
 class SearchServer {
+
+	typedef std::vector<std::string> DocText;
 
 public:
 
@@ -33,11 +33,11 @@ public:
 
 	//int GetDocumentId(int index) const;
 
-	std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
+	std::tuple<DocText, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
 
-	std::vector<int>::iterator begin();
+	std::set<int>::iterator begin();
 
-	std::vector<int>::iterator end();
+	std::set<int>::iterator end();
 
 	const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
@@ -51,7 +51,7 @@ private:
 	const std::set<std::string> stop_words_;
 	std::map<std::string, std::map<int, double>> word_to_document_freqs_;
 	std::map<int, DocumentData> documents_;
-	std::vector<int> document_ids_;
+	std::set<int> document_ids_;
 	std::map<int, std::map<std::string, double>> id_to_words_freqs_;
 
 	bool IsStopWord(const std::string& word) const;
@@ -94,6 +94,7 @@ template <typename StringContainer>
 			throw std::invalid_argument("invalid stop word!"s);
 		}
 	}*/
+	 using namespace std::literals;
 	if (!std::all_of(stop_words.begin(), stop_words.end(), IsValidWord)) {
 		throw std::invalid_argument("invalid stop word!"s);
 	}

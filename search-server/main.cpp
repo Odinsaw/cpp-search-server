@@ -77,9 +77,17 @@ int main() {
 		//// слова из разных документов, не является дубликатом
 		//search_server.AddDocument( 9, "nasty rat with curly hair"s, DocumentStatus::ACTUAL, { 1, 2 });
 
-			for (int i = 1; i < 1000; ++i) {
+			for (int i = 0; i < 500; ++i) {
 				//search_server.AddDocument(i, "nasty rat with curly hair"s, DocumentStatus::ACTUAL, { 1, 2 });
 				search_server.AddDocument(i, to_string(i), DocumentStatus::ACTUAL, { 1, 2 });
+			}
+			for (int i = 500; i < 750; ++i) {
+				//search_server.AddDocument(i, "nasty rat with curly hair"s, DocumentStatus::ACTUAL, { 1, 2 });
+				search_server.AddDocument(i,"pet with rat and rat and rat"s, DocumentStatus::ACTUAL, { 1, 2 });
+			}
+			for (int i = 750; i < 1000; ++i) {
+				//search_server.AddDocument(i, "nasty rat with curly hair"s, DocumentStatus::ACTUAL, { 1, 2 });
+				search_server.AddDocument(i, "pet with rat and rat and rat"s, DocumentStatus::ACTUAL, { 1, 2 });
 			}
 
 		cout << "Before duplicates removed: "s << search_server.GetDocumentCount() << endl;

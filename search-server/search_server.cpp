@@ -24,8 +24,9 @@ using namespace std;
 			word_to_document_freqs_[word][document_id] += inv_word_count;
 			id_to_words_freqs_[document_id][word] += inv_word_count;
 		}
+
 		documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
-		document_ids_.push_back(document_id);
+		document_ids_.insert(document_id);
 	}
 
 	vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentStatus status) const {
@@ -72,7 +73,7 @@ using namespace std;
 			}
 		}
 
-		return make_tuple(matched_words, documents_.at(document_id).status);
+		return { matched_words, documents_.at(document_id).status };
 	}
 
 	bool SearchServer::IsStopWord(const string& word) const {
@@ -142,25 +143,26 @@ using namespace std;
 		return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
 	}
 
-	std::vector<int>::iterator SearchServer::begin() {
+	std::set<int>::iterator SearchServer::begin() {
 		return document_ids_.begin();
 	}
 
-	std::vector<int>::iterator SearchServer::end() {
+	std::set<int>::iterator SearchServer::end() {
 		return document_ids_.end();
 	}
 
 	const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const {
-		return id_to_words_freqs_.at(document_id);
-		
+		auto it = id_to_words_freqs_.find(document_id);
+		static std::map<std::string, double> null_res;
+		return it == id_to_words_freqs_.end()? null_res : (*it).second;
 	 }
 
 	void SearchServer::RemoveDocument(int document_id) {
 		for (auto [word,freq] : GetWordFrequencies(document_id))  {
-				word_to_document_freqs_.at(word).erase(word_to_document_freqs_.at(word).find(document_id));
+				word_to_document_freqs_.at(word).erase(document_id);
 	}
 		id_to_words_freqs_.erase(document_id);
-			document_ids_.erase(find(document_ids_.begin(), document_ids_.end(), document_id));
-			documents_.erase(find_if(documents_.begin(), documents_.end(), [document_id](auto el) {return el.first == document_id; }));
+			document_ids_.erase(document_id);
+			documents_.erase(document_id);
 	}
 

@@ -1,5 +1,7 @@
 #pragma once
 #include "search_server.h"
+
 void RemoveDuplicates(SearchServer& search_server);
 
-bool IsDuplicate(SearchServer& search_server, int id1, int id2);
+template <typename key, typename value>
+std::set<key> GetKeys(const std::map<key, value>& in);
