@@ -5,10 +5,10 @@ using namespace std;
 
 void RemoveDuplicates(SearchServer& search_server) {
 
-	set<set<string>> words_set;
+	set<set<string_view>> words_set;
 	set<int> delete_list;
 	for (auto doc_id : search_server) {
-		set<string> words = GetKeys(search_server.GetWordFrequencies(doc_id));
+		set<string_view> words = GetKeys(search_server.GetWordFrequencies(doc_id));
 		if (words_set.find(words) != words_set.end()) {
 			delete_list.insert(doc_id);
 		}
